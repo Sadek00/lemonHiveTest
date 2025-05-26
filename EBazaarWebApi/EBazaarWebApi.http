@@ -1,0 +1,6 @@
+@EBazaarWebApi_HostAddress = http://localhost:5153
+
+GET {{EBazaarWebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
