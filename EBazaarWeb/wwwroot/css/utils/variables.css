@@ -1,0 +1,8 @@
+/* File: wwwroot/css/utils/variables.css */
+:root {
+    --bg-white: #FFF;
+    --light-gray: #E5E9EB;
+    --header-height: 112px;
+    --dark-gray: #252C32;
+    --red-r500: #F76659;
+}

@@ -1,0 +1,14 @@
+/* variables */
+@import './utils/variables.css';
+
+/* base styles */
+@import './base/reset.css';
+@import './base/typography.css';
+
+/* component styles */
+@import './components/header.css';
+@import './components/product.css';
+@import './components/card.css';
+
+/* page-specific styles */
+@import './pages/home.css';

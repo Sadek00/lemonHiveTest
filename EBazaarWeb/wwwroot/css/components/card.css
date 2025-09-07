@@ -1,0 +1,15 @@
+﻿.card {
+    width: 413px;
+    height: 200px;
+    position: absolute;
+    top: 160px;
+    left: 300px;
+    border: 1px solid #2F80ED;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-sizing: border-box;
+    background: url('/image/Vector.svg') no-repeat, linear-gradient(103.64deg, #2F80ED -3.41%, #2568C1 103.61%);
+    background-position: -0.04px -58.02px, center;
+    background-size: 430px 430px, cover;
+    background-blend-mode: color-burn;
+}
