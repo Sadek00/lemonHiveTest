@@ -14,7 +14,6 @@ builder.Services.AddScoped<DatabaseUtility>();
 
 // Register Service Layer
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
-builder.Services.AddScoped<IPrescriptionService, PrescriptionService>();
 
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
