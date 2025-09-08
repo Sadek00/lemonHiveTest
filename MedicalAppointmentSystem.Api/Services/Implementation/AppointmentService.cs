@@ -1,47 +1,96 @@
-﻿using MedicalAppointmentSystem.Api.Data.Context;
+﻿using Azure.Core;
+using MedicalAppointmentSystem.Api.Data.Context;
 using MedicalAppointmentSystem.Api.Dtos;
 using MedicalAppointmentSystem.Api.Dtos.Extension;
 using MedicalAppointmentSystem.Api.Models.Entities;
 using MedicalAppointmentSystem.Api.Services.Interfaces;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace MedicalAppointmentSystem.Api.Services.Implementation
 {
     public class AppointmentService : IAppointmentService
     {
         private readonly AppDbContext _context;
+        private readonly DatabaseUtility _dbUtility;
         private readonly ILogger<AppointmentService> _logger;
 
-        public AppointmentService(AppDbContext context, ILogger<AppointmentService> logger)
+        public AppointmentService(AppDbContext context, DatabaseUtility dbUtility, ILogger<AppointmentService> logger)
         {
             _context = context;
-            _logger = logger;
+            _dbUtility = dbUtility;
+            _logger = logger;            
         }
 
-        public async Task<IEnumerable<Appointment>> GetAllAppointmentsAsync()
+        public async Task<PagedResult<SearchApointmentsDto>> GetAppointmentsAsync(AppointmentQueryParameters queryParams)
         {
             try
             {
-                return await _context.Appointments
-                    .Include(a => a.Prescriptions)
-                        .ThenInclude(p => p.Medicine)
-                    .ToListAsync();
+                var parameters = new SqlParameter[]
+                {
+                    new("@Page", queryParams.Page),
+                    new("@PageSize", queryParams.PageSize),
+                    new("@SearchTerm", queryParams.SearchTerm ?? (object)DBNull.Value),
+                    new("@DoctorId", queryParams.DoctorId ?? (object)DBNull.Value),
+                    new("@VisitType", queryParams.VisitType ?? (object)DBNull.Value),
+                    new("@SortBy", queryParams.SortBy ?? "AppointmentDate"),
+                    new("@SortOrder", queryParams.SortOrder ?? "desc")
+                };
+
+                // Execute stored procedure that returns both data and total count
+                var dataSet = await _dbUtility.ExecuteStoredProcedureMultipleResultsAsync("sp_GetAppointmentsPaged", parameters);
+
+                var appointments = _dbUtility.ConvertDataTableToList<SearchApointmentsDto>(dataSet.Tables[0]);
+                var totalCount = dataSet.Tables[1].Rows.Count > 0 ? Convert.ToInt32(dataSet.Tables[1].Rows[0]["TotalCount"]) : 0;
+
+                var result = new PagedResult<SearchApointmentsDto>
+                {
+                    Items = appointments,
+                    TotalCount = totalCount,
+                    Page = queryParams.Page,
+                    PageSize = queryParams.PageSize
+                };
+
+                return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving all appointments");
+                _logger.LogError(ex, "Error retrieving appointments with parameters: {@QueryParams}", queryParams);
                 throw;
             }
         }
 
-        public async Task<Appointment?> GetAppointmentByIdAsync(string id)
+        public async Task<AppointmentDto> GetAppointmentByIdAsync(string id)
         {
             try
             {
-                return await _context.Appointments
-                    .Include(a => a.Prescriptions)
-                        .ThenInclude(p => p.Medicine)
-                    .FirstOrDefaultAsync(a => a.Id == id);
+                var appointment = await _context.Appointments
+                    .Where(a => a.Id == id)
+                    .Select(a => new AppointmentDto
+                    {
+                        Id = a.Id,
+                        PatientId = a.PatientId,
+                        DoctorId = a.DoctorId,
+                        AppointmentDate = a.AppointmentDate,
+                        VisitType = a.VisitType,
+                        Notes = a.Notes,
+                        Diagnosis = a.Diagnosis,
+                        CreatedDate = a.CreatedDate,
+
+                        Prescriptions = a.Prescriptions.Select(p => new PrescriptionDto
+                        {
+                            Id = p.Id,
+                            MedicineId = p.MedicineId,
+                            Dosage = p.Dosage,
+                            StartDate = p.StartDate,
+                            EndDate = p.EndDate,
+                            Notes = p.Notes,
+                        }).ToList(),
+                    })
+                    .FirstOrDefaultAsync();
+
+                return appointment ?? new AppointmentDto();
             }
             catch (Exception ex)
             {
@@ -111,6 +160,23 @@ namespace MedicalAppointmentSystem.Api.Services.Implementation
                 appointment.VisitType = appointmentDto.VisitType;
                 appointment.Notes = appointmentDto.Notes;
                 appointment.Diagnosis = appointmentDto.Diagnosis;
+
+                if(appointmentDto.Prescriptions?.Any() == true)
+                {
+                    var existingPrescriptions = _context.Prescriptions.Where(p => p.AppointmentId == id);
+                    _context.Prescriptions.RemoveRange(existingPrescriptions);
+                    var newPrescriptions = appointmentDto.Prescriptions.Select(prescriptionDto => new Prescription
+                    {
+                        AppointmentId = appointment.Id,
+                        MedicineId = prescriptionDto.MedicineId,
+                        Dosage = prescriptionDto.Dosage,
+                        StartDate = prescriptionDto.StartDate,
+                        EndDate = prescriptionDto.EndDate,
+                        Notes = prescriptionDto.Notes,
+                        CreatedDate = DateTime.Now,
+                    }).ToList();
+                    _context.Prescriptions.AddRange(newPrescriptions);
+                }
 
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("Updated appointment with ID {AppointmentId}", id);

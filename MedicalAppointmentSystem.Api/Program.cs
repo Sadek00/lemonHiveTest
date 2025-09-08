@@ -10,7 +10,7 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-DatabaseUtility.Init(builder.Configuration);
+builder.Services.AddScoped<DatabaseUtility>();
 
 // Register Service Layer
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();

@@ -18,22 +18,25 @@ namespace MedicalAppointmentSystem.Api.Controllers
 
         // GET: api/appointment
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Appointment>>> GetAppointments()
+        public async Task<ActionResult<PagedResult<AppointmentDto>>> GetAppointments([FromQuery] AppointmentQueryParameters queryParams)
         {
             try
             {
-                var appointments = await _appointmentService.GetAllAppointmentsAsync();
-                return Ok(appointments);
+                if (queryParams.Page < 1) queryParams.Page = 1;
+                if (queryParams.PageSize < 1 || queryParams.PageSize > 100) queryParams.PageSize = 10;
+
+                var result = await _appointmentService.GetAppointmentsAsync(queryParams);
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "An error occurred while retrieving appointments");
+               return StatusCode(500, "An error occurred while retrieving appointments");
             }
         }
 
         // GET: api/appointment/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Appointment>> GetAppointment(string id)
+        public async Task<ActionResult<AppointmentDto>> GetAppointment(string id)
         {
             try
             {
@@ -105,21 +108,6 @@ namespace MedicalAppointmentSystem.Api.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "An error occurred while deleting the appointment");
-            }
-        }
-
-        // GET: api/appointment/5/prescriptions
-        [HttpGet("{id}/prescriptions")]
-        public async Task<ActionResult<IEnumerable<Prescription>>> GetAppointmentPrescriptions(string id)
-        {
-            try
-            {
-                var prescriptions = await _appointmentService.GetAppointmentPrescriptionsAsync(id);
-                return Ok(prescriptions);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while retrieving prescriptions");
             }
         }
     }

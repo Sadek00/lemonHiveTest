@@ -10,6 +10,7 @@ namespace MedicalAppointmentSystem.Api.Dtos.Extension
 
             return new AppointmentDto
             {
+                Id = appointment.Id,
                 PatientId = appointment.PatientId,
                 DoctorId = appointment.DoctorId,
                 AppointmentDate = appointment.AppointmentDate,
@@ -19,6 +20,7 @@ namespace MedicalAppointmentSystem.Api.Dtos.Extension
                 CreatedDate = appointment.CreatedDate,
                 Prescriptions = appointment.Prescriptions?.Select(p => new PrescriptionDto
                 {
+                    Id = p.Id,
                     MedicineId = p.MedicineId,
                     Dosage = p.Dosage,
                     StartDate = p.StartDate,

@@ -5,8 +5,8 @@ namespace MedicalAppointmentSystem.Api.Services.Interfaces
 {
     public interface IAppointmentService
     {
-        Task<IEnumerable<Appointment>> GetAllAppointmentsAsync();
-        Task<Appointment?> GetAppointmentByIdAsync(string id);
+        Task<PagedResult<SearchApointmentsDto>> GetAppointmentsAsync(AppointmentQueryParameters appointmentQueryParameters);
+        Task<AppointmentDto> GetAppointmentByIdAsync(string id);
         Task<AppointmentDto> CreateAppointmentAsync(CreateAppointmentDto appointmentDto);
         Task<bool> UpdateAppointmentAsync(string id, CreateAppointmentDto appointmentDto);
         Task<bool> DeleteAppointmentAsync(string id);
