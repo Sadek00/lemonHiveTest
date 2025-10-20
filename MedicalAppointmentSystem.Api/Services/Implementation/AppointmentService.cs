@@ -88,6 +88,7 @@ namespace MedicalAppointmentSystem.Api.Services.Implementation
                             Notes = p.Notes,
                         }).ToList(),
                     })
+                    .AsNoTracking()
                     .FirstOrDefaultAsync();
 
                 return appointment ?? new AppointmentDto();
