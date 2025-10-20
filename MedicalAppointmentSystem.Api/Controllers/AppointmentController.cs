@@ -1,5 +1,4 @@
 ﻿using MedicalAppointmentSystem.Api.Dtos;
-using MedicalAppointmentSystem.Api.Models.Entities;
 using MedicalAppointmentSystem.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +16,7 @@ namespace MedicalAppointmentSystem.Api.Controllers
         }
 
         // GET: api/appointment
-        [HttpGet]
+        [HttpGet(Name = "GetAppointments")]
         public async Task<ActionResult<PagedResult<AppointmentDto>>> GetAppointments([FromQuery] AppointmentQueryParameters queryParams)
         {
             try
